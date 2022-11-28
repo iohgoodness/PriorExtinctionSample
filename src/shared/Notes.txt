@@ -1,0 +1,23 @@
+--[[ change from performance to precise ]]
+--[[
+for _,v in pairs(workspace:GetDescendants()) do
+    if v:IsA('MeshPart') then
+        if v.RenderFidelity == Enum.RenderFidelity.Performance then
+            v.RenderFidelity = Enum.RenderFidelity.Precise
+            v:SetAttribute('ChangedFromPerformaceToPrecise', true)
+        end
+    end
+end
+]]
+
+--[[ change from precise to performance ]]
+--[[
+for _,v in pairs(workspace:GetDescendants()) do
+    if v:IsA('MeshPart') then
+        if v:GetAttribute('ChangedFromPerformaceToPrecise') == true then
+            v.RenderFidelity = Enum.RenderFidelity.Performance
+            v:SetAttribute('ChangedFromPerformaceToPrecise', nil)
+        end
+    end
+end
+]]
