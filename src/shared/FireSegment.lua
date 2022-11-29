@@ -41,7 +41,7 @@ function FireSegment:Active(active)
     self._smokeObject.Enabled = active
 end
 
-function FireSegment.new(position, lifetime)
+function FireSegment.new(position, lifetime, y)
     local self = setmetatable({}, FireSegment)
 
     --# properties
@@ -51,13 +51,13 @@ function FireSegment.new(position, lifetime)
         LightEmission = 0,
         LightInfluence = .5,
         Orientation = Enum.ParticleOrientation.FacingCamera,
-        Size = NumberSequence.new((math.random(1600,2400)/1000), (math.random(800,1100)/1000)),
+        Size = NumberSequence.new((math.random(1900,2400)/1000), (math.random(800,1100)/1000)),
         Lifetime = NumberRange.new(1,math.random(1000,2000)/1000),
-        Rate = 20,
+        Rate = 40,
         Rotation = NumberRange.new(1,1),
-        RotSpeed = NumberRange.new(5,12),
+        RotSpeed = NumberRange.new(8,12),
         Speed = NumberRange.new(3,5),
-        SpreadAngle = Vector2.new(18, 30),
+        SpreadAngle = Vector2.new(60, 80), --Vector2.new(18, 30),
         Acceleration = Vector3.new(0, 0, 0),
         Enabled = false,
         Texture = 'http://www.roblox.com/asset/?id=160041569',
@@ -77,7 +77,7 @@ function FireSegment.new(position, lifetime)
     --# creation of proxy part
     self._part = Instance.new('Part')
     self._part.Transparency = 1
-    self._part.Size = Vector3.new(.1,.1,.1)
+    self._part.Size = Vector3.new(.1,(y or .1),.1)
     self._part.CanCollide = false
     self._part.Locked = true
     self._part.Anchored = true
