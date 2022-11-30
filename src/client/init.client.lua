@@ -12,6 +12,9 @@ local UserInputService = game:GetService("UserInputService")
 local Fire = require(ReplicatedStorage['rojo-sync-shared'].Fire)
 local FireSegment = require(ReplicatedStorage['rojo-sync-shared'].FireSegment)
 local FireSpread = require(ReplicatedStorage['rojo-sync-shared'].FireSpread)
+local LightningBolt = require(ReplicatedStorage['rojo-sync-shared'].Lightning.LightningBolt)
+local LightningSparks = require(ReplicatedStorage['rojo-sync-shared'].Lightning.LightningSparks)
+local LightningExplosion = require(ReplicatedStorage['rojo-sync-shared'].Lightning.LightningExplosion)
 
 local fireClass = Instance.new('Folder')
 fireClass.Name = 'FireClass'
@@ -26,11 +29,38 @@ local mouse = player:GetMouse()
 
 mouse.TargetFilter = workspace.Assets
 
+function SpawnLightning(position)
+    local p1,p2 = Instance.new('Part'),Instance.new('Part')
+    p1.Anchored=true;p1.CanCollide=false;p1.Size=Vector3.new();p1.Position=(CFrame.new(position)*CFrame.new(math.random(-5,5),150,math.random(-5,5))).Position;p1.Transparency=1;p1.Parent=workspace;
+    p2.Anchored=true;p2.CanCollide=false;p2.Size=Vector3.new();p2.Position=(CFrame.new(position)*CFrame.new(math.random(-2,2),0,math.random(-2,2))).Position;p2.Transparency=1;p2.Parent=workspace;
+    local at1,at2 = Instance.new('Attachment'),Instance.new('Attachment')
+    at1.Parent=p1;at2.Parent=p2;
+    for i=1, math.random(4,6) do
+        task.delay(math.random(0,2000)/10000, function()
+            local NewBolt = LightningBolt.new(at1, at2, math.random(40,60))
+            NewBolt.CurveSize0, NewBolt.CurveSize1 = math.random(-5,5), math.random(4,6)
+            NewBolt.PulseSpeed = math.random(12,15)
+            NewBolt.PulseLength = 1.8
+            NewBolt.FadeLength = 0.11
+            NewBolt.MaxRadius = 10
+            NewBolt.Color = Color3.new(1, 1, 0)
+            --LightningExplosion.new(Position, Size, NumBolts, Color, BoltColor, UpVector)
+            LightningSparks.new(NewBolt, 30)
+            --LightningExplosion.new((CFrame.new(position)*CFrame.new(Vector3.new(0,-3,0))).Position, .1, 0, Color3.new(1,.4,0), Color3.new(1,.4,0))
+        end)
+    end
+    task.delay(2, function()
+        p1:Destroy();p2:Destroy()
+    end)
+end
+
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         if not mouse.Target then return end
         local position = mouse.Hit.Position
+        SpawnLightning(position)
+        task.wait(.2)
         ReplicatedStorage.SpawnFire:FireServer(position)
         table.insert(Fire.Segments, FireSegment.new(position))
         FireSpread.SetOnFire(position)

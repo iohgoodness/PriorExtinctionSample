@@ -46,19 +46,32 @@ function FireSegment.new(position, lifetime, y)
 
     --# properties
     self._fire = {
-        Brightness = .4,
-        Color = ColorSequence.new(Color3.new(1,1,0), Color3.new(1,0,0)),
-        LightEmission = 0,
-        LightInfluence = .5,
+        Brightness = .8,
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(246,250,36)),
+            ColorSequenceKeypoint.new(0.758, Color3.fromRGB(238,129,40)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(240,0,0)),
+        },
+        LightEmission = .7,
+        LightInfluence = .3,
         Orientation = Enum.ParticleOrientation.FacingCamera,
-        Size = NumberSequence.new((math.random(1900,2400)/1000), (math.random(800,1100)/1000)),
-        Lifetime = NumberRange.new(1,math.random(1000,2000)/1000),
-        Rate = 40,
+        Size = NumberSequence.new {
+            NumberSequenceKeypoint.new(0, .932),
+            NumberSequenceKeypoint.new(.199, 2.55),
+            NumberSequenceKeypoint.new(.489, 2.86),
+            NumberSequenceKeypoint.new(1, 2.55),
+        },
+        Transparency = NumberSequence.new {
+            NumberSequenceKeypoint.new(0, .28),
+            NumberSequenceKeypoint.new(1, .756),
+        },
+        Lifetime = NumberRange.new(1,1.495),
+        Rate = 50,
         Rotation = NumberRange.new(1,1),
-        RotSpeed = NumberRange.new(8,12),
-        Speed = NumberRange.new(3,5),
-        SpreadAngle = Vector2.new(60, 80), --Vector2.new(18, 30),
-        Acceleration = Vector3.new(0, 0, 0),
+        RotSpeed = NumberRange.new(2,3),
+        Speed = NumberRange.new(4,4),
+        SpreadAngle = Vector2.new(20, 30), --Vector2.new(18, 30),
+        Acceleration = Vector3.new(0, -2, 0),
         Enabled = false,
         Texture = 'http://www.roblox.com/asset/?id=160041569',
     }

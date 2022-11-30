@@ -162,7 +162,6 @@ function PartCacheStatic:Expand(numParts: number): ()
 	if numParts == nil then
 		numParts = self.ExpansionSize
 	end
-	
 	for _ = 1, numParts do
 		table.insert(self.Open, MakeFromTemplate(self.Template, self.CurrentCacheParent))
 	end

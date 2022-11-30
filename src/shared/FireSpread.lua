@@ -141,7 +141,7 @@ function FireSpread:init()
     task.spawn(function() FireSpread.DeadChecker() end)
 end
 
-
+--[[
 local Selection = game:GetService("Selection")
 local all = Selection:Get()[1]:GetDescendants()
 for _,v in pairs(all) do
@@ -153,6 +153,7 @@ for _,v in pairs(all) do
         v:Destroy()
     end
 end
+]]
 
 
 return FireSpread
