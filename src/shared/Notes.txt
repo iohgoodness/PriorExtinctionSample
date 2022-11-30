@@ -21,3 +21,17 @@ for _,v in pairs(workspace:GetDescendants()) do
     end
 end
 ]]
+
+--[[
+local Selection = game:GetService("Selection")
+local all = Selection:Get()[1]:GetDescendants()
+for _,v in pairs(all) do
+    if v:IsA('MeshPart') then
+        local p = Instance.new('Part')
+        p.Size = Vector3.new(v.Size.X, v.Size.Y, v.Size.Z)
+        p.Name = v.Name
+        p.Parent = v.Parent
+        v:Destroy()
+    end
+end
+]]

@@ -35,7 +35,7 @@ function SpawnLightning(position)
     p2.Anchored=true;p2.CanCollide=false;p2.Size=Vector3.new();p2.Position=(CFrame.new(position)*CFrame.new(math.random(-2,2),0,math.random(-2,2))).Position;p2.Transparency=1;p2.Parent=workspace;
     local at1,at2 = Instance.new('Attachment'),Instance.new('Attachment')
     at1.Parent=p1;at2.Parent=p2;
-    for i=1, math.random(4,6) do
+    for i=1, math.random(2,3) do
         task.delay(math.random(0,2000)/10000, function()
             local NewBolt = LightningBolt.new(at1, at2, math.random(40,60))
             NewBolt.CurveSize0, NewBolt.CurveSize1 = math.random(-5,5), math.random(4,6)
@@ -44,9 +44,7 @@ function SpawnLightning(position)
             NewBolt.FadeLength = 0.11
             NewBolt.MaxRadius = 10
             NewBolt.Color = Color3.new(1, 1, 0)
-            --LightningExplosion.new(Position, Size, NumBolts, Color, BoltColor, UpVector)
             LightningSparks.new(NewBolt, 30)
-            --LightningExplosion.new((CFrame.new(position)*CFrame.new(Vector3.new(0,-3,0))).Position, .1, 0, Color3.new(1,.4,0), Color3.new(1,.4,0))
         end)
     end
     task.delay(2, function()
@@ -64,11 +62,41 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         ReplicatedStorage.SpawnFire:FireServer(position)
         table.insert(Fire.Segments, FireSegment.new(position))
         FireSpread.SetOnFire(position)
+    elseif input.UserInputType == Enum.UserInputType.Keyboard then
+        local key = input.KeyCode
+        if key == Enum.KeyCode.LeftShift or key == Enum.KeyCode.RightShift then
+            local character = player.Character or player.CharacterAdded:Wait()
+            if not character then return end
+            local humanoid = character:WaitForChild('Humanoid')
+            if not humanoid then return end
+            humanoid.WalkSpeed = 100
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.Keyboard then
+        local key = input.KeyCode
+        if key == Enum.KeyCode.LeftShift or key == Enum.KeyCode.RightShift then
+            local character = player.Character or player.CharacterAdded:Wait()
+            if not character then return end
+            local humanoid = character:WaitForChild('Humanoid')
+            if not humanoid then return end
+            humanoid.WalkSpeed = 16
+        end
     end
 end)
 
 ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(position, lifetime)
+    SpawnLightning(position)
+    task.wait(.2)
     table.insert(Fire.Segments, FireSegment.new(position, lifetime))
+    FireSpread.SetOnFire(position)
+end)
+
+ReplicatedStorage.KillFire.OnClientEvent:Connect(function(biome)
+    
 end)
 
 FireSpread:init()

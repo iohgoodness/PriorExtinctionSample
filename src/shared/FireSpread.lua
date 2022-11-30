@@ -19,6 +19,7 @@ local CHECK_SPREAD_TIMER = 10 -- SECONDS
 function FireSpread.SpreadChecker()
     while task.wait(CHECK_SPREAD_TIMER) do
         for _,nearIgniteData in pairs(FireSpread.nearIgnite) do
+            if not nearIgniteData[2] then --[[warn(nearIgniteData[1][1], 'DOES NOT HAVE SPREADCHANCE');]] continue end
             if math.random(1,100) <= nearIgniteData[2].SpreadChance then
                 task.delay(math.random(1000, 2500)/1000, function() FireSpread.SetOnFire(nearIgniteData[1]) end)
             end
@@ -140,20 +141,5 @@ function FireSpread:init()
     task.spawn(function() FireSpread.SpreadChecker() end)
     task.spawn(function() FireSpread.DeadChecker() end)
 end
-
---[[
-local Selection = game:GetService("Selection")
-local all = Selection:Get()[1]:GetDescendants()
-for _,v in pairs(all) do
-    if v:IsA('MeshPart') then
-        local p = Instance.new('Part')
-        p.Size = Vector3.new(v.Size.X, v.Size.Y, v.Size.Z)
-        p.Name = v.Name
-        p.Parent = v.Parent
-        v:Destroy()
-    end
-end
-]]
-
 
 return FireSpread
