@@ -20,6 +20,7 @@ function FireSegment:Destroy()
 end
 
 function FireSegment:FizzleOut()
+    if not self then return end
     if not self._part then return end
     self._smokeObject.Enabled = false
     task.spawn(function()
@@ -41,7 +42,7 @@ function FireSegment:Active(active)
     self._smokeObject.Enabled = active
 end
 
-function FireSegment.new(position, lifetime, y)
+function FireSegment.new(position, lifetime, y, biome)
     local self = setmetatable({}, FireSegment)
 
     --# properties
@@ -112,9 +113,9 @@ function FireSegment.new(position, lifetime, y)
     self._part.Parent = workspace.FireClass.FireSegments
 
     -- spawn fizzleout delay
-    task.delay(self._lifetime, function() self:FizzleOut() end)
+    task.delay(self._lifetime, function() if self and self.FizzleOut then self:FizzleOut() end end)
 
-    self._biome = nil
+    self._biome = biome or 'NONE'
 
     -- activate fire
     self:Active(true)

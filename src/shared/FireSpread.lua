@@ -13,7 +13,7 @@ local WildfireData = require(ReplicatedStorage:WaitForChild('Shared'):WaitForChi
 local IN_SPREAD_RANGE = 10 -- STUDS
 local IN_IGNITE_RANGE = 4 -- STUDS
 
-local CHECK_SPREAD_TIMER = 10 -- SECONDS
+local CHECK_SPREAD_TIMER = 2 -- SECONDS
 
 --# thread that will always be checking to see if other objects should be catching on fire by checking the chance
 function FireSpread.SpreadChecker()
@@ -21,7 +21,11 @@ function FireSpread.SpreadChecker()
         for _,nearIgniteData in pairs(FireSpread.nearIgnite) do
             if not nearIgniteData[2] then --[[warn(nearIgniteData[1][1], 'DOES NOT HAVE SPREADCHANCE');]] continue end
             if math.random(1,100) <= nearIgniteData[2].SpreadChance then
-                task.delay(math.random(1000, 2500)/1000, function() FireSpread.SetOnFire(nearIgniteData[1]) end)
+                task.delay(math.random(1000, 2500)/1000, function()
+                    if table.find(nearIgniteData, FireSpread.nearIgnite) then
+                        FireSpread.SetOnFire(nearIgniteData[1])
+                    end
+                end)
             end
         end
     end
@@ -77,11 +81,12 @@ function FireSpread.SetOnFire(value)
             local objectData = FireSpread.GetObjectData(biome, ignitableData)
             local db = {ignitableData,objectData,tick()}
             if dist <= IN_SPREAD_RANGE then
-                if dist <= IN_IGNITE_RANGE and not table.find(FireSpread.cantIgnite, ignitableData) and db[2] then
-                    table.insert(FireSpread.cantIgnite, ignitableData)
+                if dist <= IN_IGNITE_RANGE and not model:GetAttribute('OnFire') and db[2] then
+                    model:SetAttribute('OnFire', true)
                     table.remove(FireSpread.ignitable, index)
-                    ReplicatedStorage.SpawnFire:FireServer(ignitableData[2], db[2].BurnOutLimit, size.Y)
-                    require(script.Parent.FireSegment).new(ignitableData[2], db[2].BurnOutLimit, size.Y)
+                    ReplicatedStorage.SpawnFire:FireServer(ignitableData[2], db[2].BurnOutLimit, size.Y, biome)
+                    local fs = require(script.Parent.FireSegment).new(ignitableData[2], db[2].BurnOutLimit, size.Y, biome)
+                    table.insert(require(script.Parent.Fire).Segments, {model, fs})
                     table.insert(FireSpread.onFire, {model, tick()+db[2].BurnOutLimit, biome})
                 else
                     table.insert(FireSpread.willSpread, ignitableData)
@@ -95,16 +100,18 @@ function FireSpread.SetOnFire(value)
         local cf,size = model:GetBoundingBox()
         local position = Vector3.new(((math.round(cf.Position.X*10))/10), ((math.round(cf.Position.Y*10))/10), ((math.round(cf.Position.Z*10))/10))
         for index,ignitableData in pairs(FireSpread.ignitable) do
+            local model = ignitableData[1]
             local dist = (Vector3.new(position.X,0,position.Z)-Vector3.new(ignitableData[2].X,0,ignitableData[2].Z)).Magnitude
             local biome = ignitableData[3]
             local objectData = FireSpread.GetObjectData(ignitableData[3], ignitableData)
             local db = {ignitableData,objectData,tick()}
             if dist <= IN_SPREAD_RANGE then
-                if dist <= IN_IGNITE_RANGE and not table.find(FireSpread.cantIgnite, ignitableData) then
-                    table.insert(FireSpread.cantIgnite, ignitableData)
+                if dist <= IN_IGNITE_RANGE and not model:GetAttribute('OnFire') then
+                    model:SetAttribute('OnFire', true)
                     table.remove(FireSpread.ignitable, index)
-                    ReplicatedStorage.SpawnFire:FireServer(ignitableData[2], db[2].BurnOutLimit, size.Y)
-                    require(script.Parent.FireSegment).new(ignitableData[2], db[2].BurnOutLimit, size.Y)
+                    ReplicatedStorage.SpawnFire:FireServer(ignitableData[2], db[2].BurnOutLimit, size.Y, biome)
+                    local fs = require(script.Parent.FireSegment).new(ignitableData[2], db[2].BurnOutLimit, size.Y, biome)
+                    table.insert(require(script.Parent.Fire).Segments, {model, fs})
                     table.insert(FireSpread.onFire, {model, tick()+db[2].BurnOutLimit, biome})
                 else
                     task.delay(1, function()

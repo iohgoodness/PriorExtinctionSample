@@ -60,7 +60,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         SpawnLightning(position)
         task.wait(.2)
         ReplicatedStorage.SpawnFire:FireServer(position)
-        table.insert(Fire.Segments, FireSegment.new(position))
+        table.insert(Fire.Segments, {nil, FireSegment.new(position)})
         FireSpread.SetOnFire(position)
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         local key = input.KeyCode
@@ -88,15 +88,27 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
-ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(position, lifetime)
+ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(position, lifetime, y, biome)
     SpawnLightning(position)
     task.wait(.2)
-    table.insert(Fire.Segments, FireSegment.new(position, lifetime))
+    table.insert(Fire.Segments, {nil, FireSegment.new(position, lifetime, y, biome)})
     FireSpread.SetOnFire(position)
 end)
 
 ReplicatedStorage.KillFire.OnClientEvent:Connect(function(biome)
-    
+    for index,v in pairs(FireSpread.nearIgnite) do
+        print(v[1][3], biome)
+        if v[1][3] == biome then
+            print 'removed'
+            table.remove(FireSpread.nearIgnite, index)
+        end
+    end
+    for _,v in pairs(Fire.Segments) do
+        if v[2]._biome == biome then
+            task.spawn(function() v[2]:FizzleOut() end)
+            if v[1] then v[1]:GetAttribute('OnFire', nil) end
+        end
+    end
 end)
 
 FireSpread:init()

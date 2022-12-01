@@ -9,10 +9,10 @@ local Players = game:GetService("Players")
 
 local Fire = require(ReplicatedStorage['rojo-sync-shared'].Fire)
 
-ReplicatedStorage.SpawnFire.OnServerEvent:Connect(function(player, position, lifetime, spread)
+ReplicatedStorage.SpawnFire.OnServerEvent:Connect(function(player, position, lifetime, y, biome)
     for _,otherPlayer in pairs(Players:GetChildren()) do
         if player == otherPlayer then continue end
-        ReplicatedStorage.SpawnFire:FireClient(otherPlayer, position, lifetime, spread)
+        ReplicatedStorage.SpawnFire:FireClient(otherPlayer, position, lifetime, y, biome)
     end
 end)
 
