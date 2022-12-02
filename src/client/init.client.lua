@@ -96,12 +96,15 @@ ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(position, lifetime, y
 end)
 
 ReplicatedStorage.KillFire.OnClientEvent:Connect(function(biome)
+    table.insert(FireSpread.extinguishBiome, biome)
+    task.spawn(function()
+        local oldBiome = biome
+        task.wait(2)
+        local oldBiomeIndex = table.find(FireSpread.extinguishBiome, oldBiome)
+        table.remove(FireSpread.extinguishBiome, oldBiomeIndex)
+    end)
     for index,v in pairs(FireSpread.nearIgnite) do
-        print(v[1][3], biome)
-        if v[1][3] == biome then
-            print 'removed'
-            table.remove(FireSpread.nearIgnite, index)
-        end
+        if v[1][3] == biome then table.remove(FireSpread.nearIgnite, index) end
     end
     for _,v in pairs(Fire.Segments) do
         if v[2]._biome == biome then

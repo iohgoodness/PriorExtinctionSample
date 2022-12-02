@@ -35,3 +35,237 @@ for _,v in pairs(all) do
     end
 end
 ]]
+
+
+--[[
+if workspace:FindFirstChild('TempTreeFirePoints') then workspace.Temp:Destroy() end
+local temp = Instance.new('Folder')
+temp.Name = 'TempTreeFirePoints'
+temp.Parent = workspace
+local treeNames = {}
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WildfireData = require(ReplicatedStorage:WaitForChild('Shared'):WaitForChild('WildfireData'))
+for _,biomeData in pairs(WildfireData) do
+    for _,name in pairs(biomeData.WildFireSpreadData['Large Trees'].PlantsIncluded) do
+        table.insert(treeNames, name)
+    end
+    for _,name in pairs(biomeData.WildFireSpreadData['Small Trees'].PlantsIncluded) do
+        table.insert(treeNames, name)
+    end
+end
+local extraFirePoints = {}
+for index,tree in pairs(workspace.Assets.Biomes:GetDescendants()) do
+    if not table.find(treeNames, tree.Name) then continue end
+    if not tree:IsA('Model') then continue end
+    tree:SetAttribute('TreeID', index)
+    local clone = tree:Clone()
+    clone:PivotTo(tree:GetPivot()*CFrame.new(0, 500, 0))
+    clone.Parent = temp
+    for _,v in pairs(clone:GetDescendants()) do
+        if v:IsA('MeshPart') then
+            v.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition
+        end
+    end
+end
+]]
+
+if false then
+
+
+--# this code will find all points in which the trees could have nice looking fire
+
+if workspace:FindFirstChild('TempTreeFirePoints') then workspace.TempTreeFirePoints:Destroy() end
+local temp = Instance.new('Folder')
+temp.Name = 'TempTreeFirePoints'
+temp.Parent = workspace
+local treeNames = {}
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WildfireData = require(ReplicatedStorage:WaitForChild('Shared'):WaitForChild('WildfireData'))
+for _,biomeData in pairs(WildfireData) do
+    for _,name in pairs(biomeData.WildFireSpreadData['Large Trees'].PlantsIncluded) do
+        table.insert(treeNames, name)
+    end
+    for _,name in pairs(biomeData.WildFireSpreadData['Small Trees'].PlantsIncluded) do
+        table.insert(treeNames, name)
+    end
+end
+local extraFirePoints = {}
+for index,tree in pairs(workspace.Assets.Biomes:GetDescendants()) do
+    if not table.find(treeNames, tree.Name) then continue end
+    if not tree:IsA('Model') then continue end
+    tree:SetAttribute('TreeID', index)
+    local clone = tree:Clone()
+    clone:PivotTo(tree:GetPivot()*CFrame.new(0, 0, 0))
+    clone.Parent = temp
+    for _,v in pairs(clone:GetDescendants()) do
+        if v:IsA('MeshPart') then
+            v.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition
+        end
+    end
+    task.wait(.05)
+    extraFirePoints[index] = {}
+    local cf,size = clone:GetBoundingBox()
+    local topPart = Instance.new('Part')
+    topPart.CFrame = cf*CFrame.new(0,(size.Y/2)+10,0)
+    topPart.Anchored = true
+    topPart.Transparency = 1
+    topPart.Size = Vector3.new(size.X,.1,size.Z)
+    topPart.Parent = workspace
+    local botPart = Instance.new('Part')
+    botPart.CFrame = cf*CFrame.new(0,-(size.Y/2)-10,0)
+    botPart.Anchored = true
+    botPart.Transparency = 1
+    botPart.Size = Vector3.new(size.X,.1,size.Z)
+    botPart.Parent = workspace
+    local interval = math.ceil(((size.X+size.Z)/2)*.2)
+    for x=0, size.X, interval do
+        for z=0, size.Z, interval do
+            local abovePart = Instance.new('Part')
+            abovePart.CFrame = CFrame.new(x+topPart.Position.X-topPart.Size.X/2, topPart.Position.Y, z+topPart.Position.Z-topPart.Size.Z/2)
+            abovePart.Anchored = true
+            abovePart.Transparency = 1
+            abovePart.Size = Vector3.new(.5,.5,.5)
+            abovePart.Parent = workspace
+            local rayOrigin = Vector3.new(abovePart.Position.X, abovePart.Position.Y, abovePart.Position.Z)
+            local rayDirection = Vector3.new(0, -500, 0)
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterDescendantsInstances = {clone}
+            raycastParams.FilterType = Enum.RaycastFilterType.Whitelist
+            local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+            abovePart:Destroy()
+            if not raycastResult then continue end
+            local part = Instance.new('Part')
+            part.CFrame = CFrame.new(Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
+            part.Anchored = true
+            part.Transparency = 0
+            part.Size = Vector3.new(3,3,3)
+            part.Parent = workspace.TempTreeFirePoints
+            table.insert(extraFirePoints[index], Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
+        end
+    end
+    for x=0, size.X, interval do
+        for z=0, size.Z, interval do
+            local abovePart = Instance.new('Part')
+            abovePart.CFrame = CFrame.new(x+botPart.Position.X-botPart.Size.X/2, botPart.Position.Y, z+botPart.Position.Z-botPart.Size.Z/2)
+            abovePart.Anchored = true
+            abovePart.Transparency = 1
+            abovePart.Size = Vector3.new(.5,.5,.5)
+            abovePart.Parent = workspace
+            local rayOrigin = Vector3.new(abovePart.Position.X, abovePart.Position.Y, abovePart.Position.Z)
+            local rayDirection = Vector3.new(0, 500, 0)
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterDescendantsInstances = {clone}
+            raycastParams.FilterType = Enum.RaycastFilterType.Whitelist
+            local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+            abovePart:Destroy()
+            if not raycastResult then continue end
+            local part = Instance.new('Part')
+            part.CFrame = CFrame.new(Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
+            part.Anchored = true
+            part.Transparency = 0
+            part.Size = Vector3.new(2,2,2)
+            part.Parent = workspace.TempTreeFirePoints
+            table.insert(extraFirePoints[index], Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
+        end
+    end
+    topPart:Destroy()
+    botPart:Destroy()
+end
+treeNames = nil
+--temp:Destroy()
+local output = 'return {\n\t'
+for k,v in pairs(extraFirePoints) do
+    output ..= string.format('[%d] = {\n\t\t', k)
+    for k1,v2 in pairs(v) do
+        output ..= string.format('[%d] = Vector3.new(%d,%d,%d),\n\t\t', k1, v2.X, v2.Y, v2.Z)
+    end
+    output ..= '},\n\t'
+end
+output ..= '}'
+extraFirePoints = nil
+
+ReplicatedStorage.Generated.ExtraTreeFirePoints.Source = output
+
+
+end
+
+
+
+
+--# BELOW NO LONGER IN USE BUT WILL PASTE FOR REFERENCE #--
+
+
+--# find extra fire points for the trees to make effect more realistic
+--# to make more optimized, this will run before runtime
+--[[
+function FireSpread:FindExtraFirePoints()
+    local treeNames = {}
+    for _,biomeData in pairs(WildfireData) do
+        for _,name in pairs(biomeData.WildFireSpreadData['Large Trees'].PlantsIncluded) do
+            table.insert(treeNames, name)
+        end
+        for _,name in pairs(biomeData.WildFireSpreadData['Small Trees'].PlantsIncluded) do
+            table.insert(treeNames, name)
+        end
+    end
+    for _,tree in pairs(workspace.Assets.Biomes:GetDescendants()) do
+        if not table.find(treeNames, tree.Name) then continue end
+        if not tree:IsA('Model') then continue end
+        self.extraFirePoints[tree] = {}
+        local cf,size = tree:GetBoundingBox()
+        local topPart = Instance.new('Part')
+        topPart.CFrame = cf*CFrame.new(0,(size.Y/2)+10,0)
+        topPart.Anchored = true
+        topPart.Transparency = 1
+        topPart.Size = Vector3.new(size.X,.1,size.Z)
+        topPart.Parent = workspace
+        local botPart = Instance.new('Part')
+        botPart.CFrame = cf*CFrame.new(0,-(size.Y/2)-10,0)
+        botPart.Anchored = true
+        botPart.Transparency = 1
+        botPart.Size = Vector3.new(size.X,.1,size.Z)
+        botPart.Parent = workspace
+        local interval = math.ceil(((size.X+size.Z)/2)*.3)
+        for x=0, size.X, interval do
+            for z=0, size.Z, interval do
+                local abovePart = Instance.new('Part')
+                abovePart.CFrame = CFrame.new(x+topPart.Position.X-topPart.Size.X/2, topPart.Position.Y, z+topPart.Position.Z-topPart.Size.Z/2)
+                abovePart.Anchored = true
+                abovePart.Transparency = 1
+                abovePart.Size = Vector3.new(.5,.5,.5)
+                abovePart.Parent = workspace
+                local rayOrigin = Vector3.new(abovePart.Position.X, abovePart.Position.Y, abovePart.Position.Z)
+                local rayDirection = Vector3.new(0, -500, 0)
+                local raycastParams = RaycastParams.new()
+                raycastParams.FilterDescendantsInstances = {tree}
+                raycastParams.FilterType = Enum.RaycastFilterType.Whitelist
+                local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+                abovePart:Destroy()
+                if not raycastResult then continue end
+                table.insert(self.extraFirePoints[tree], Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
+            end
+        end
+        for x=0, size.X, interval do
+            for z=0, size.Z, interval do
+                local abovePart = Instance.new('Part')
+                abovePart.CFrame = CFrame.new(x+botPart.Position.X-botPart.Size.X/2, botPart.Position.Y, z+botPart.Position.Z-botPart.Size.Z/2)
+                abovePart.Anchored = true
+                abovePart.Transparency = 1
+                abovePart.Size = Vector3.new(.5,.5,.5)
+                abovePart.Parent = workspace
+                local rayOrigin = Vector3.new(abovePart.Position.X, abovePart.Position.Y, abovePart.Position.Z)
+                local rayDirection = Vector3.new(0, 500, 0)
+                local raycastParams = RaycastParams.new()
+                raycastParams.FilterDescendantsInstances = {tree}
+                raycastParams.FilterType = Enum.RaycastFilterType.Whitelist
+                local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+                abovePart:Destroy()
+                if not raycastResult then continue end
+                table.insert(self.extraFirePoints[tree], Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
+            end
+        end
+        topPart:Destroy()
+        botPart:Destroy()
+    end
+end
+]]

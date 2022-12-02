@@ -91,7 +91,7 @@ function FireSegment.new(position, lifetime, y, biome)
     --# creation of proxy part
     self._part = Instance.new('Part')
     self._part.Transparency = 1
-    self._part.Size = Vector3.new(.1,(y or .1),.1)
+    self._part.Size = Vector3.new(.1,.1,.1)
     self._part.CanCollide = false
     self._part.Locked = true
     self._part.Anchored = true
