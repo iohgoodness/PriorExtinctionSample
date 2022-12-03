@@ -1,11 +1,8 @@
 -- Timestamp // 11/27/2022 09:59:00 MNT
 -- Author // @iohgoodness
--- Description // Fire start module
-
---# example code for fire segment usage
---FireSegment.new()
---FireSegment.new(Vector3.new(3,0,0))
---FireSegment.new(Vector3.new(6,0,0), 5)
+-- Description // Basic module to create a fire particle
+-- lots of other utility that go into the fire segments,
+-- these are created on a client and stored in the Fire.lua module
 
 local FireSegment = {}
 
@@ -14,11 +11,13 @@ FireSegment.__index = FireSegment
 local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
 
+--# cleanup
 function FireSegment:Destroy()
     Debris:AddItem(self._part,.4)
     self = nil
 end
 
+--# nice effect to make the fire go away
 function FireSegment:FizzleOut()
     if not self then return end
     if not self._part then return end
@@ -37,12 +36,20 @@ function FireSegment:FizzleOut()
     self:Destroy()
 end
 
-function FireSegment:Active(active)
+--# turning the fire on or off
+function FireSegment:Active(active : boolean)
     self._fireObject.Enabled = active
     self._smokeObject.Enabled = active
 end
 
-function FireSegment.new(position, lifetime, y, biome)
+
+--# example code for fire segment usage
+--FireSegment.new()
+--FireSegment.new(Vector3.new(3,0,0))
+--FireSegment.new(Vector3.new(6,0,0), 5)
+--FireSegment.new(Vector3.new(6,0,0), 5, 10)
+--FireSegment.new(Vector3.new(6,0,0), 5, 10, 'Redwoods')
+function FireSegment.new(position : Vector3, lifetime : number, y : number, biome : string)
     local self = setmetatable({}, FireSegment)
 
     --# properties
@@ -112,12 +119,12 @@ function FireSegment.new(position, lifetime, y, biome)
     self._smokeObject.Parent = self._part
     self._part.Parent = workspace.FireClass.FireSegments
 
-    -- spawn fizzleout delay
+    --# spawn fizzleout delay
     task.delay(self._lifetime, function() if self and self.FizzleOut then self:FizzleOut() end end)
 
+    --# set biome that the fire will live in
     self._biome = biome or 'NONE'
 
-    -- activate fire
     self:Active(true)
 
     return self

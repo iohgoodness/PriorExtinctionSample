@@ -1,3 +1,9 @@
+
+--# Lots of time I find myself writing code to make a grueling task easier,
+--# normally I keep that in a notes.txt aka. a ROBLOX string value, 
+--# depending on your team, that will change of course, just letting you know! :D
+
+
 --[[ change from performance to precise ]]
 --[[
 for _,v in pairs(workspace:GetDescendants()) do
@@ -37,42 +43,14 @@ end
 ]]
 
 
---[[
-if workspace:FindFirstChild('TempTreeFirePoints') then workspace.Temp:Destroy() end
-local temp = Instance.new('Folder')
-temp.Name = 'TempTreeFirePoints'
-temp.Parent = workspace
-local treeNames = {}
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local WildfireData = require(ReplicatedStorage:WaitForChild('Shared'):WaitForChild('WildfireData'))
-for _,biomeData in pairs(WildfireData) do
-    for _,name in pairs(biomeData.WildFireSpreadData['Large Trees'].PlantsIncluded) do
-        table.insert(treeNames, name)
-    end
-    for _,name in pairs(biomeData.WildFireSpreadData['Small Trees'].PlantsIncluded) do
-        table.insert(treeNames, name)
-    end
-end
-local extraFirePoints = {}
-for index,tree in pairs(workspace.Assets.Biomes:GetDescendants()) do
-    if not table.find(treeNames, tree.Name) then continue end
-    if not tree:IsA('Model') then continue end
-    tree:SetAttribute('TreeID', index)
-    local clone = tree:Clone()
-    clone:PivotTo(tree:GetPivot()*CFrame.new(0, 500, 0))
-    clone.Parent = temp
-    for _,v in pairs(clone:GetDescendants()) do
-        if v:IsA('MeshPart') then
-            v.CollisionFidelity = Enum.CollisionFidelity.PreciseConvexDecomposition
-        end
-    end
-end
-]]
 
-if false then
+
+
+
 
 
 --# this code will find all points in which the trees could have nice looking fire
+--# put into the command line, works like a charm and bypasses tons of manual work :D
 
 if workspace:FindFirstChild('TempTreeFirePoints') then workspace.TempTreeFirePoints:Destroy() end
 local temp = Instance.new('Folder')
@@ -187,12 +165,19 @@ extraFirePoints = nil
 ReplicatedStorage.Generated.ExtraTreeFirePoints.Source = output
 
 
-end
 
 
 
 
+
+
+
+--
+--
 --# BELOW NO LONGER IN USE BUT WILL PASTE FOR REFERENCE #--
+--
+--
+
 
 
 --# find extra fire points for the trees to make effect more realistic

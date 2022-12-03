@@ -1,6 +1,7 @@
 -- Timestamp // 11/28/2022 08:49:42 MNT
 -- Author // @iohgoodness
 -- Description // Main controller for the fires
+-- for the server to spawn wildfires based on the database
 
 local Fire = {}
 
@@ -12,6 +13,9 @@ local BiomesDir = workspace.Assets.Biomes
 Fire.Segments = {}
 Fire.FireActive = {}
 
+--# simple util function to shuffle table
+--# [CLEANLIENESS] normally of course util functions go into a seperate module for organizational purposes...  just letting you know that I know :D
+--# leaving it here just for for easability when reading code
 local function shuffle(t)
     local j, temp
     for i = #t, 1, -1 do
@@ -22,19 +26,21 @@ local function shuffle(t)
     end
 end
 
+--# main controller for wildfires
+--# [NOTE] when you see --[[x]] in code somewhere, that is just there for test cases
 Fire.Wildfires = function()
     local found = false
     local biomes = {}
     for biomeName,_ in pairs(WildfireData) do Fire.FireActive[biomeName] = false end
     for biomeName,biomeData in pairs(WildfireData) do table.insert(biomes,{biomeName,biomeData}) end
     task.spawn(function()
-        while task.wait(5--[[600]]) do
+        while task.wait(600--[[5]]) do
             shuffle(biomes)
             for _,data in ipairs(biomes) do
                 local biomeName = data[1]
                 local biomeData = data[2]
                 local chance = (math.random(1, 100*10))
-                if true --[[(chance <= biomeData.RandomWildFireChance*10)]] then
+                if (chance <= biomeData.RandomWildFireChance*10) --[[true]] then
                     local biomeDir = BiomesDir[biomeName]
                     local options = {}
                     for _,v in pairs(biomeDir:GetChildren()) do
@@ -46,16 +52,15 @@ Fire.Wildfires = function()
                     ReplicatedStorage.SpawnFire:FireAllClients(cf.Position)
                     Fire.FireActive[biomeName] = true
                     local waitTime = math.random(biomeData.WildFireLength.Lowest, biomeData.WildFireLength.Highest)
-                    task.delay(5--[[waitTime]], function()
+                    task.delay(waitTime--[[5]], function()
                         Fire.FireActive[biomeName] = false
-                        --print('killing', biomeName, 'fire')
                         ReplicatedStorage.KillFire:FireAllClients(biomeName)
                     end)
                     found = true
                 end
                 if found then found = false break end
             end
-            task.wait(60)
+            --[[task.wait(60)]]
         end
     end)
 end

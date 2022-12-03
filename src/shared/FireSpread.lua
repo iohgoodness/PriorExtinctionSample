@@ -1,6 +1,8 @@
 -- Timestamp // 11/27/2022 09:59:00 MNT
 -- Author // @iohgoodness
--- Description // Custom fire spread module
+-- Description // Main fire spread module
+-- a few different functions are shown here, there is a short description of each function
+-- if it's fairly relevant O(N) will be described
 
 local FireSpread = {}
 
@@ -11,10 +13,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local WildfireData = require(ReplicatedStorage:WaitForChild('Shared'):WaitForChild('WildfireData'))
 local ExtraTreeFirePointsData = require(ReplicatedStorage:WaitForChild('Generated'):WaitForChild('ExtraTreeFirePoints'))
 
-local IN_SPREAD_RANGE = 10 -- STUDS
-local IN_IGNITE_RANGE = 4 -- STUDS
-
-local CHECK_SPREAD_TIMER = 5 -- SECONDS
+--# important fire spreading properties
+local IN_SPREAD_RANGE    = 11 -- STUDS
+local IN_IGNITE_RANGE    =  5 -- STUDS
+local CHECK_SPREAD_TIMER =  4 -- SECONDS
 
 --# thread that will always be checking to see if other objects should be catching on fire by checking the chance
 function FireSpread.SpreadChecker()
@@ -49,9 +51,11 @@ function FireSpread.DeadChecker()
             local biome = modelData[3]
             if tick() >= deathTick then
                 table.remove(FireSpread.onFire, index)
-                --local mesh = model.Mesh:GetChildren()[1]
-                --local transparency = mesh.Transparency
-                --mesh.Transparency = .6
+                for _,v in pairs(model:GetDescendants()) do
+                    if v:IsA('MeshPart') then
+                        v.Transparency = .3
+                    end
+                end
                 table.insert(FireSpread.recovery, {model, tick()+WildfireData[biome].RecoveryTimer, 0})
             end
         end
@@ -61,14 +65,19 @@ function FireSpread.DeadChecker()
             local transparency = modelData[3]
             if tick() >= aliveTick then
                 table.remove(FireSpread.recovery, index)
-                --model.Mesh:GetChildren()[1].Transparency = transparency
+                model:SetAttribute('OnFire', nil)
+                for _,v in pairs(model:GetDescendants()) do
+                    if v:IsA('MeshPart') then
+                        v.Transparency = transparency
+                    end
+                end
             end
         end
     end
 end
 
 --# utility function to get the data about the object that is on fire
---# THIS IS GETTING REPLACED LATER (SO ALL OF THIS CAN BE DONE AT RUNTIME CHANGING O(N)->O(1))
+--# [OPTIMIZATION] this could be established once in a variable at runtime O(N)->O(1)
 function FireSpread.GetObjectData(biome, obj)
     obj=obj[1]
     local spreadData = WildfireData[biome].WildFireSpreadData
@@ -79,6 +88,8 @@ function FireSpread.GetObjectData(biome, obj)
     end
 end
 
+--# function to add extra fire to trees that exist
+--# [OPTIMIZATION] ridding of extra variables (fairly cheap, but still notable)
 function FireSpread.ExtraFire(pos, burnOutLimit, y, biome, model)
     local positions = ExtraTreeFirePointsData[model:GetAttribute('TreeID')]
     if not positions then return end
@@ -90,7 +101,7 @@ end
 
 --# set a position on fire and start checking for spread
 function FireSpread.SetOnFire(value)
-    if typeof(value) == "Vector3" then
+    if typeof(value) == "Vector3" then --# set fire on a positional value
         for index,ignitableData in pairs(FireSpread.ignitable) do
             local model = ignitableData[1]
             local cf,size = model:GetBoundingBox()
@@ -169,8 +180,6 @@ function FireSpread:init()
         local cf,size = burnableModelData[1]:GetBoundingBox()
         table.insert(self.ignitable, {burnableModelData[1], Vector3.new(((math.round(cf.Position.X*10))/10), ((math.round(cf.Position.Y*10))/10), ((math.round(cf.Position.Z*10))/10)), burnableModelData[2]})
     end
-    --self:FindExtraFirePoints()
-    --print(self.extraFirePoints)
     task.spawn(function() FireSpread.SpreadChecker() end)
     task.spawn(function() FireSpread.DeadChecker() end)
 end

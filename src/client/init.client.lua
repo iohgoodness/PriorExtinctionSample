@@ -1,34 +1,40 @@
 -- Timestamp // 11/27/2022 10:09:54 MNT
 -- Author // @iohgoodness
 -- Description // Main client init for priorextinctionsample repo
+-- nothing too special here, normally like to be more organized but for simplicity for the trial
+-- keeping things a little more condensed
 
---# create simple dirs for testing
-
+--# ensure new random values upon studio/server runtime
 math.randomseed(tick())
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
+--# imports from other modules
 local Fire = require(ReplicatedStorage['rojo-sync-shared'].Fire)
 local FireSegment = require(ReplicatedStorage['rojo-sync-shared'].FireSegment)
 local FireSpread = require(ReplicatedStorage['rojo-sync-shared'].FireSpread)
+
+--# I didn't write the lightning module ~ so no comments included in said files
 local LightningBolt = require(ReplicatedStorage['rojo-sync-shared'].Lightning.LightningBolt)
 local LightningSparks = require(ReplicatedStorage['rojo-sync-shared'].Lightning.LightningSparks)
 local LightningExplosion = require(ReplicatedStorage['rojo-sync-shared'].Lightning.LightningExplosion)
 
+--# simple dirs for more organization
 local fireClass = Instance.new('Folder')
 fireClass.Name = 'FireClass'
 fireClass.Parent = workspace
-
 local fireSegments = Instance.new('Folder')
 fireSegments.Name = 'FireSegments'
 fireSegments.Parent = fireClass
 
+--# get the player's mouse (deprecated in replacement of UIS/raycasting, I prefer :GetMouse() as it's produced better results in comparison)
+--# that being said, I am very open to new ideas and new diction and keep up fairly well with luau API, just felt like it was important to explain the usage of the method :GetMouse()
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
-
 mouse.TargetFilter = workspace.Assets
 
+--# spawn a few lightning bolts, nice animation to go along with the fire segment
 function SpawnLightning(position)
     local p1,p2 = Instance.new('Part'),Instance.new('Part')
     p1.Anchored=true;p1.CanCollide=false;p1.Size=Vector3.new();p1.Position=(CFrame.new(position)*CFrame.new(math.random(-5,5),150,math.random(-5,5))).Position;p1.Transparency=1;p1.Parent=workspace;
@@ -52,6 +58,7 @@ function SpawnLightning(position)
     end)
 end
 
+--# used for sprint, as well as lighting fires with mouse clicks
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -74,6 +81,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
+--# using for Sprint to turn off
 UserInputService.InputEnded:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.Keyboard then
@@ -88,6 +96,7 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
+--# used to replicate clients spawning lightning/fire/fire spread to other clients
 ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(position, lifetime, y, biome)
     SpawnLightning(position)
     task.wait(.2)
@@ -95,6 +104,7 @@ ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(position, lifetime, y
     FireSpread.SetOnFire(position)
 end)
 
+--# used to replicate a fire dying to other clients
 ReplicatedStorage.KillFire.OnClientEvent:Connect(function(biome)
     table.insert(FireSpread.extinguishBiome, biome)
     task.spawn(function()
