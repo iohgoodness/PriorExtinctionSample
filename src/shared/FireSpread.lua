@@ -44,6 +44,24 @@ function FireSpread.SpreadChecker()
     end
 end
 
+--# mdb4 = make a float divisible by 4
+function mdb4(x)
+    x=math.ceil(x)
+    if x%4==0 then return x end
+    return x + (4-(x % 4))
+end
+
+function FireSpread.TerrainChecker()
+    while task.wait(1) do
+        for index,regionChangedData in pairs(FireSpread.regionChanged) do
+            if not (tick() > regionChangedData[4]) then continue end
+            print(regionChangedData)
+            workspace.Terrain:ReplaceMaterial(regionChangedData[1], 4, Enum.Material[regionChangedData[3]], Enum.Material[regionChangedData[2]])
+            table.remove(FireSpread.regionChanged,index)
+        end
+    end
+end
+
 --# thread always checking to see if an object is ready to be dead
 function FireSpread.DeadChecker()
     while task.wait(1) do
@@ -55,12 +73,54 @@ function FireSpread.DeadChecker()
                 table.remove(FireSpread.onFire, index)
                 for _,v in pairs(model:GetDescendants()) do
                     if v:IsA('MeshPart') then
-                        v.Transparency = .3
+                        if v.Name ~= 'Collider' and v.Name ~= 'LookPart' then
+                            if not v:FindFirstChild('States') then
+                                v.Transparency = 1
+                            else
+                                local newState = v.States.Burned:GetChildren()[1]:Clone()
+                                if v:FindFirstChildOfClass('SurfaceAppearance') then v:FindFirstChildOfClass('SurfaceAppearance'):Destroy() end
+                                newState.Parent = v
+                            end
+                        end
+                    end
+                end
+                local cf,size
+                if model:FindFirstChild('Trunk') then
+                    cf,size = model.Trunk.CFrame,model.Trunk.Size
+                elseif model:FindFirstChild('Mesh') and model:FindFirstChild('Mesh'):IsA('Model') then
+                    cf,size = model:GetBoundingBox()
+                elseif model:FindFirstChild('Branches') then
+                    cf,size = model.Branches.CFrame,model.Branches.Size
+                end
+                local r1,r2 = 10,9
+                for i=1, 3 do
+                    local x1,x2 = (cf.Position.X-size.X/2),(cf.Position.X+size.X/2)
+                    local z1,z2 = (cf.Position.Z-size.Z/2),(cf.Position.Z+size.Z/2)
+                    local y1,y2 = ((cf.Position.Y-size.Y/2)-2),(cf.Position.Y-size.Y/2+2)
+                    if i == 2 then
+                        x1+=math.random(-r1,-r2)
+                        x2+=math.random(r2,r1)
+                    elseif i == 3 then
+                        z1+=math.random(-r1,-r2)
+                        z2+=math.random(r2,r1)
+                    end
+                    local minTerrainEdit = 4*2
+                    if (x1-x2) < minTerrainEdit*2 then x1 -= minTerrainEdit; x2 += minTerrainEdit end
+                    if (z1-z2) < minTerrainEdit*2 then z1 -= minTerrainEdit; z2 += minTerrainEdit end
+                    if (y1-y2) < minTerrainEdit*2 then y1 -= minTerrainEdit; y2 += minTerrainEdit end
+                    x1,x2,z1,z2,y1,y2=mdb4(x1),mdb4(x2),mdb4(z1),mdb4(z2),mdb4(y1),mdb4(y2)
+                    local min,max = Vector3.new(x1, y1, z1),Vector3.new(x2, y2, z2)
+                    for m1,m2 in pairs(WildfireData[biome].ScorchedMaterials) do
+                        local region = Region3.new(min,max);
+                        region = region:ExpandToGrid(4)
+                        workspace.Terrain:ReplaceMaterial(region, 4, Enum.Material[m1], Enum.Material[m2.TurnInto])
+                        table.insert(FireSpread.regionChanged, {region, m1, m2.TurnInto, tick()+m2.RevertToOriginal})
                     end
                 end
                 table.insert(FireSpread.recovery, {model, tick()+WildfireData[biome].RecoveryTimer, 0})
             end
         end
+
         for index,modelData in pairs(FireSpread.recovery) do
             local model = modelData[1]
             local aliveTick = modelData[2]
@@ -70,7 +130,15 @@ function FireSpread.DeadChecker()
                 model:SetAttribute('OnFire', nil)
                 for _,v in pairs(model:GetDescendants()) do
                     if v:IsA('MeshPart') then
-                        v.Transparency = transparency
+                        if v.Name ~= 'Collider' and v.Name ~= 'LookPart' then
+                            if not v:FindFirstChild('States') then
+                                v.Transparency = transparency
+                            else
+                                local newState = v.States.Normal:GetChildren()[1]:Clone()
+                                v:FindFirstChildOfClass('SurfaceAppearance'):Destroy()
+                                newState.Parent = v
+                            end
+                        end
                     end
                 end
             end
@@ -140,6 +208,7 @@ function FireSpread.ExtraFire(pos, burnOutLimit, objSize, biome, model, foundEff
     --end
 end
 
+--# Search function for checking if ignitable object is near an on-fire object
 function FireSpread.SearchNearIgnite(data)
     for _,v in pairs(FireSpread.nearIgnite) do
         if v[1][1] == data then
@@ -253,10 +322,12 @@ end
 --# this will happen at runtime so that the calculations don't have to happen as the fire is actively spreading
 --# this will save on in-game processing
 function FireSpread:init()
+    self.regionChanged = {}
     self.savedPlantParents = {}
     self.extraFirePoints = {}
     self.extinguishBiome = {}
     self.ignitable = {}
+    self.terrainChanged = {}
     self.nearIgnite = {}
     self.cantIgnite = {}
     self.willSpread = {}
@@ -283,6 +354,7 @@ function FireSpread:init()
     end
     task.spawn(function() FireSpread.SpreadChecker() end)
     task.spawn(function() FireSpread.DeadChecker() end)
+    task.spawn(function() FireSpread.TerrainChecker() end)
 end
 
 return FireSpread
