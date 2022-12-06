@@ -9,7 +9,11 @@ local FireSegment = {}
 FireSegment.__index = FireSegment
 
 local Debris = game:GetService("Debris")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+
+local fireParticle = ReplicatedStorage:WaitForChild('Assets'):WaitForChild('Particles'):WaitForChild('Fire')
+local smokeParticle = ReplicatedStorage:WaitForChild('Assets'):WaitForChild('Particles'):WaitForChild('Smoke')
 
 --# cleanup
 function FireSegment:Destroy()
@@ -49,70 +53,55 @@ end
 --FireSegment.new(Vector3.new(6,0,0), 5)
 --FireSegment.new(Vector3.new(6,0,0), 5, 10)
 --FireSegment.new(Vector3.new(6,0,0), 5, 10, 'Redwoods')
-function FireSegment.new(position : Vector3, lifetime : number, y : number, biome : string)
+--FireSegment.new(Vector3.new(6,0,0), 5, 10, 'Redwoods', 20)
+--FireSegment.new(Vector3.new(6,0,0), 5, 10, 'Redwoods', 20, 10)
+function FireSegment.new(cf : CFrame, lifetime : number, objSize : number, biome : string, rate : number, size : number, rotation : Vector3)
     local self = setmetatable({}, FireSegment)
 
-    --# properties
-    self._fire = {
-        Brightness = .8,
-        Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(246,250,36)),
-            ColorSequenceKeypoint.new(0.758, Color3.fromRGB(238,129,40)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(240,0,0)),
-        },
-        LightEmission = .7,
-        LightInfluence = .3,
-        Orientation = Enum.ParticleOrientation.FacingCamera,
-        Size = NumberSequence.new {
-            NumberSequenceKeypoint.new(0, .932),
-            NumberSequenceKeypoint.new(.199, 2.55),
-            NumberSequenceKeypoint.new(.489, 2.86),
-            NumberSequenceKeypoint.new(1, 2.55),
-        },
-        Transparency = NumberSequence.new {
-            NumberSequenceKeypoint.new(0, .28),
-            NumberSequenceKeypoint.new(1, .756),
-        },
-        Lifetime = NumberRange.new(1,1.495),
-        Rate = 45+math.floor(y or 5),
-        Rotation = NumberRange.new(1,1),
-        RotSpeed = NumberRange.new(2,3),
-        Speed = NumberRange.new(4,4),
-        SpreadAngle = Vector2.new(math.random(15,25), math.random(25,35)), --Vector2.new(18, 30),
-        Acceleration = Vector3.new(0, -2, 0),
-        Enabled = false,
-        Texture = 'http://www.roblox.com/asset/?id=160041569',
-    }
-    self._smoke = {
-        Color = Color3.fromRGB(84,84,84),
-        Opacity = (math.random(7,10)*.1),
-        RiseVelocity = (math.random(4,12)),
-        Size = .1,
-        TimeScale = (math.random(8,9)/10),
-        Enabled = false,
-    }
-
-    self._position = position or Vector3.new()
+    self._cf = cf or CFrame.new()
     self._lifetime = lifetime or 2
 
     --# creation of proxy part
     self._part = Instance.new('Part')
-    self._part.Transparency = 1
-    self._part.Size = Vector3.new(.1,.1,.1)
-    self._part.CanCollide = false
-    self._part.Locked = true
-    self._part.Anchored = true
-    self._part.Position = self._position
 
-    --# set properties of fire and smoke
-    self._fireObject = Instance.new('ParticleEmitter')
-    for k,v in pairs(self._fire) do
-        self._fireObject[k] = v
-    end
-    self._smokeObject = Instance.new('Smoke')
-    for k,v in pairs(self._smoke) do
-        self._smokeObject[k] = v
-    end
+    if not objSize then objSize=Vector3.new(2,2,2) end
+    self._part.Transparency = 1;self._part.Size = Vector3.new(objSize.X,objSize.Y,objSize.Z);self._part.CanCollide = false;self._part.Locked = true;self._part.Anchored = true
+    self._part.CFrame = self._cf
+
+    self._fireObject = fireParticle:Clone()
+    self._smokeObject = smokeParticle:Clone()
+    local rateMulti = rate or 4 --[[(((rate or 10)/10))*.85]]
+    local sizeMulti = size or 4 --[[((size or 20)/20)*3]]
+    self._fireObject.Size = NumberSequence.new {
+        --NumberSequenceKeypoint.new(0, 3.31*sizeMulti),
+        --NumberSequenceKeypoint.new(.123, 2.81*sizeMulti),
+        --NumberSequenceKeypoint.new(.179, 2.69*sizeMulti),
+        --NumberSequenceKeypoint.new(.268, 2.56*sizeMulti),
+        --NumberSequenceKeypoint.new(.43, 2.31*sizeMulti),
+        --NumberSequenceKeypoint.new(.576, 2.19*sizeMulti),
+        --NumberSequenceKeypoint.new(.576, 2.19*sizeMulti),
+        --NumberSequenceKeypoint.new(.744, 1.75*sizeMulti),
+        --NumberSequenceKeypoint.new(.905, .437*sizeMulti),
+        --NumberSequenceKeypoint.new(1, .125*sizeMulti),
+        NumberSequenceKeypoint.new(0, sizeMulti),
+        NumberSequenceKeypoint.new(1, sizeMulti),
+    }
+    self._fireObject.Rate = rateMulti
+    self._smokeObject.Size = NumberSequence.new {
+        --NumberSequenceKeypoint.new(0, 3.31*sizeMulti),
+        --NumberSequenceKeypoint.new(.123, 2.81*sizeMulti),
+        --NumberSequenceKeypoint.new(.179, 2.69*sizeMulti),
+        --NumberSequenceKeypoint.new(.268, 2.56*sizeMulti),
+        --NumberSequenceKeypoint.new(.43, 2.31*sizeMulti),
+        --NumberSequenceKeypoint.new(.576, 2.19*sizeMulti),
+        --NumberSequenceKeypoint.new(.576, 2.19*sizeMulti),
+        --NumberSequenceKeypoint.new(.744, 1.75*sizeMulti),
+        --NumberSequenceKeypoint.new(.905, .437*sizeMulti),
+        --NumberSequenceKeypoint.new(1, .125*sizeMulti),
+        NumberSequenceKeypoint.new(0, sizeMulti),
+        NumberSequenceKeypoint.new(1, sizeMulti),
+    }
+    self._smokeObject.Rate = rateMulti
 
     --# set parents
     self._fireObject.Parent = self._part

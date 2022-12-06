@@ -116,7 +116,7 @@ for index,tree in pairs(workspace.Assets.Biomes:GetDescendants()) do
             part.CFrame = CFrame.new(Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
             part.Anchored = true
             part.Transparency = 0
-            part.Size = Vector3.new(3,3,3)
+            part.Size = Vector3.new(2,2,2)
             part.Parent = workspace.TempTreeFirePoints
             table.insert(extraFirePoints[index], Vector3.new(math.floor(raycastResult.Position.X),math.floor(raycastResult.Position.Y),math.floor(raycastResult.Position.Z)))
         end

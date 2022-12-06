@@ -37,7 +37,7 @@ mouse.TargetFilter = workspace.Assets
 --# spawn a few lightning bolts, nice animation to go along with the fire segment
 function SpawnLightning(position)
     local p1,p2 = Instance.new('Part'),Instance.new('Part')
-    p1.Anchored=true;p1.CanCollide=false;p1.Size=Vector3.new();p1.Position=(CFrame.new(position)*CFrame.new(math.random(-5,5),150,math.random(-5,5))).Position;p1.Transparency=1;p1.Parent=workspace;
+    p1.Anchored=true;p1.CanCollide=false;p1.Size=Vector3.new();p1.Position=(CFrame.new(position)*CFrame.new(math.random(-5,5),500,math.random(-5,5))).Position;p1.Transparency=1;p1.Parent=workspace;
     p2.Anchored=true;p2.CanCollide=false;p2.Size=Vector3.new();p2.Position=(CFrame.new(position)*CFrame.new(math.random(-2,2),0,math.random(-2,2))).Position;p2.Transparency=1;p2.Parent=workspace;
     local at1,at2 = Instance.new('Attachment'),Instance.new('Attachment')
     at1.Parent=p1;at2.Parent=p2;
@@ -49,7 +49,7 @@ function SpawnLightning(position)
             NewBolt.PulseLength = 1.8
             NewBolt.FadeLength = 0.11
             NewBolt.MaxRadius = 10
-            NewBolt.Color = Color3.new(1, 1, 0)
+            NewBolt.Color = Color3.fromRGB(241, 241, 114)
             LightningSparks.new(NewBolt, 30)
         end)
     end
@@ -63,12 +63,13 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         if not mouse.Target then return end
-        local position = mouse.Hit.Position
+        local cf = mouse.Hit
+        local position = cf.Position
         SpawnLightning(position)
         task.wait(.2)
-        ReplicatedStorage.SpawnFire:FireServer(position)
-        table.insert(Fire.Segments, {nil, FireSegment.new(position)})
-        FireSpread.SetOnFire(position)
+        ReplicatedStorage.SpawnFire:FireServer(cf)
+        table.insert(Fire.Segments, {nil, FireSegment.new(cf)})
+        FireSpread.SetOnFire(cf)
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         local key = input.KeyCode
         if key == Enum.KeyCode.LeftShift or key == Enum.KeyCode.RightShift then
@@ -76,7 +77,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             if not character then return end
             local humanoid = character:WaitForChild('Humanoid')
             if not humanoid then return end
-            humanoid.WalkSpeed = 100
+            humanoid.WalkSpeed = 150
         end
     end
 end)
@@ -97,11 +98,11 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
 end)
 
 --# used to replicate clients spawning lightning/fire/fire spread to other clients
-ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(position, lifetime, y, biome)
-    SpawnLightning(position)
+ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(cf, lifetime, y, biome)
+    SpawnLightning(cf)
     task.wait(.2)
-    table.insert(Fire.Segments, {nil, FireSegment.new(position, lifetime, y, biome)})
-    FireSpread.SetOnFire(position)
+    table.insert(Fire.Segments, {nil, FireSegment.new(cf, lifetime, y, biome)})
+    FireSpread.SetOnFire(cf)
 end)
 
 --# used to replicate a fire dying to other clients
