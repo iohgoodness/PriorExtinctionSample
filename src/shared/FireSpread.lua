@@ -10,7 +10,10 @@ FireSpread.__index = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+--# data imports
 local WildfireData = require(ReplicatedStorage:WaitForChild('Shared'):WaitForChild('WildfireData'))
+local AmbienceData = require(ReplicatedStorage:WaitForChild('Shared'):WaitForChild('AmbienceData'))
+
 local ExtraTreeFirePointsData = require(ReplicatedStorage:WaitForChild('Generated'):WaitForChild('ExtraTreeFirePoints'))
 
 --# important fire spreading properties
@@ -22,7 +25,7 @@ local CHECK_SPREAD_TIMER =  4 -- SECONDS
 function FireSpread.SpreadChecker()
     while task.wait(1) do
         for index,nearIgniteData in pairs(FireSpread.nearIgnite) do
-            if not (tick() >= nearIgniteData[4]) then print 'not ready yet' continue end
+            if not (tick() >= nearIgniteData[4]) then continue end
             if not nearIgniteData[2] then --[[warn(nearIgniteData[1][1], 'DOES NOT HAVE SPREADCHANCE');]] continue end
             if math.random(1,100) <= nearIgniteData[2].SpreadChance then
                 task.delay(0, function()
@@ -51,13 +54,14 @@ function mdb4(x)
     return x + (4-(x % 4))
 end
 
+--# thread to check terrain to see if there is any terrain ready to revert back to it's original state
 function FireSpread.TerrainChecker()
     while task.wait(1) do
         for index,regionChangedData in pairs(FireSpread.regionChanged) do
             if not (tick() > regionChangedData[4]) then continue end
-            print(regionChangedData)
             workspace.Terrain:ReplaceMaterial(regionChangedData[1], 4, Enum.Material[regionChangedData[3]], Enum.Material[regionChangedData[2]])
             table.remove(FireSpread.regionChanged,index)
+            task.wait(.01)
         end
     end
 end
@@ -84,6 +88,7 @@ function FireSpread.DeadChecker()
                         end
                     end
                 end
+                --# for changing terrain into desired scorched material
                 local cf,size
                 if model:FindFirstChild('Trunk') then
                     cf,size = model.Trunk.CFrame,model.Trunk.Size
@@ -93,7 +98,7 @@ function FireSpread.DeadChecker()
                     cf,size = model.Branches.CFrame,model.Branches.Size
                 end
                 local r1,r2 = 10,9
-                for i=1, 3 do
+                for i=1, 3 do --# iterations for circle appearance
                     local x1,x2 = (cf.Position.X-size.X/2),(cf.Position.X+size.X/2)
                     local z1,z2 = (cf.Position.Z-size.Z/2),(cf.Position.Z+size.Z/2)
                     local y1,y2 = ((cf.Position.Y-size.Y/2)-2),(cf.Position.Y-size.Y/2+2)
@@ -120,7 +125,7 @@ function FireSpread.DeadChecker()
                 table.insert(FireSpread.recovery, {model, tick()+WildfireData[biome].RecoveryTimer, 0})
             end
         end
-
+        --# revert models back to an original state
         for index,modelData in pairs(FireSpread.recovery) do
             local model = modelData[1]
             local aliveTick = modelData[2]
@@ -218,6 +223,15 @@ function FireSpread.SearchNearIgnite(data)
     return false
 end
 
+--# controller for the fire spread sound
+--[[
+function FireSpread.ExpandSound(position)
+    for _,v in pairs() do
+
+    end
+end
+]]
+
 --# set a position on fire and start checking for spread
 function FireSpread.SetOnFire(value)
     if typeof(value) == "CFrame" then --# set fire on a positional value
@@ -241,6 +255,9 @@ function FireSpread.SetOnFire(value)
             foundSpreadTimer=foundSpreadTimer or CHECK_SPREAD_TIMER
             local db = {ignitableData,objectData,tick(), tick()+foundSpreadTimer}
 
+            local burnOutLimit
+            if #db>=2 then if db[2] then burnOutLimit = db[2].BurnOutLimit end end
+
             if dist <= (foundSpreadRange or IN_SPREAD_RANGE) then
                 if dist <= (foundIgniteRange or IN_IGNITE_RANGE) and not model:GetAttribute('OnFire') and db[2] then
                     local newRate,newSize,isTree
@@ -249,11 +266,17 @@ function FireSpread.SetOnFire(value)
                         isTree = true
                     end
                     model:SetAttribute('OnFire', true)
+                    
                     table.remove(FireSpread.ignitable, index)
+                    task.delay(db[2].BurnOutLimit+20, function()
+                        table.insert(FireSpread.ignitable, ignitableData)
+                    end)
+
                     ReplicatedStorage.SpawnFire:FireServer(ignitableData[2], db[2].BurnOutLimit, size, biome, newRate or foundEffectRate, newSize or foundEffectSize)
                     local fs = require(script.Parent.FireSegment).new(ignitableData[2], db[2].BurnOutLimit, size, biome, newRate or foundEffectRate, newSize or foundEffectSize)
                     table.insert(require(script.Parent.Fire).Segments, {model, fs})
                     table.insert(FireSpread.onFire, {model, tick()+db[2].BurnOutLimit, biome})
+                    FireSpread.ExpandSound(cf.Position)
                     if isTree then
                         FireSpread.ExtraFire(ignitableData[2], db[2].BurnOutLimit, size, biome, model, foundEffectRate, foundEffectSize)
                     end
@@ -261,6 +284,12 @@ function FireSpread.SetOnFire(value)
                     if not table.find(FireSpread.extinguishBiome, biome) and not FireSpread.SearchNearIgnite(db[1][1]) then
                         table.insert(FireSpread.willSpread, ignitableData)
                         table.insert(FireSpread.nearIgnite, db)
+                        local willSpreadIndex = #FireSpread.willSpread
+                        local nearIgniteIndex = #FireSpread.nearIgnite
+                        task.delay(burnOutLimit, function()
+                            table.remove(FireSpread.willSpread, willSpreadIndex)
+                            table.remove(FireSpread.nearIgnite, nearIgniteIndex)
+                        end)
                     end
                 end
             end
@@ -288,6 +317,9 @@ function FireSpread.SetOnFire(value)
 
             foundSpreadTimer=foundSpreadTimer or CHECK_SPREAD_TIMER
             local db = {ignitableData,objectData,tick(), tick()+foundSpreadTimer}
+            
+            local burnOutLimit
+            if #db>=2 then if db[2] then burnOutLimit = db[2].BurnOutLimit end end
 
             if dist <= (foundSpreadRange or IN_SPREAD_RANGE) then
                 if dist <= (foundIgniteRange or IN_IGNITE_RANGE) and not model:GetAttribute('OnFire') and db[2] then
@@ -298,6 +330,10 @@ function FireSpread.SetOnFire(value)
                     end
                     model:SetAttribute('OnFire', true)
                     table.remove(FireSpread.ignitable, index)
+                    task.delay(db[2].BurnOutLimit+20, function()
+                        table.insert(FireSpread.ignitable, ignitableData)
+                    end)
+
                     ReplicatedStorage.SpawnFire:FireServer(ignitableData[2], db[2].BurnOutLimit, size, biome, newRate or foundEffectRate, newSize or foundEffectSize)
                     local fs = require(script.Parent.FireSegment).new(ignitableData[2], db[2].BurnOutLimit, size, biome, newRate or foundEffectRate, newSize or foundEffectSize)
                     table.insert(require(script.Parent.Fire).Segments, {model, fs})
@@ -310,6 +346,12 @@ function FireSpread.SetOnFire(value)
                         if not table.find(FireSpread.extinguishBiome, biome) and not FireSpread.SearchNearIgnite(db[1][1]) then
                             table.insert(FireSpread.willSpread, ignitableData)
                             table.insert(FireSpread.nearIgnite, db)
+                            local willSpreadIndex = #FireSpread.willSpread
+                            local nearIgniteIndex = #FireSpread.nearIgnite
+                            task.delay(burnOutLimit, function()
+                                table.remove(FireSpread.willSpread, willSpreadIndex)
+                                table.remove(FireSpread.nearIgnite, nearIgniteIndex)
+                            end)
                         end
                     end)
                 end
@@ -322,6 +364,7 @@ end
 --# this will happen at runtime so that the calculations don't have to happen as the fire is actively spreading
 --# this will save on in-game processing
 function FireSpread:init()
+    self.fireSounds = {}
     self.regionChanged = {}
     self.savedPlantParents = {}
     self.extraFirePoints = {}
