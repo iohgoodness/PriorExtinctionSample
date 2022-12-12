@@ -59,13 +59,13 @@ function SpawnLightning(position)
             LightningSparks.new(NewBolt, 30)
         end)
     end
-    task.delay(6, function() p1:Destroy();p2:Destroy() end)
+    task.delay(20, function() p1:Destroy();p2:Destroy() end)
     local sound = Instance.new('Sound')
     sound.Name = 'LightningStrike'
     sound.SoundId = 'rbxassetid://' .. LightningSoundData.ID
     sound.Volume = LightningSoundData.Volume
     sound.RollOffMaxDistance = 2500
-    sound.RollOffMinDistance = 2
+    sound.RollOffMinDistance = 500
     sound.RollOffMode = Enum.RollOffMode.Inverse
     sound.Parent = p2
     sound:Play()
@@ -87,6 +87,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         task.wait(.2)
         ReplicatedStorage.SpawnFire:FireServer(cf)
         table.insert(Fire.Segments, {nil, FireSegment.new(cf)})
+        --FireSpread.ExpandSound(Vector3.new(2,2,2), cf.Position)
         FireSpread.SetOnFire(cf)
     elseif input.UserInputType == Enum.UserInputType.Keyboard then
         local key = input.KeyCode
@@ -120,6 +121,7 @@ ReplicatedStorage.SpawnFire.OnClientEvent:Connect(function(cf, lifetime, y, biom
     SpawnLightning(cf)
     task.wait(.2)
     table.insert(Fire.Segments, {nil, FireSegment.new(cf, lifetime, y, biome)})
+    --FireSpread.ExpandSound(Vector3.new(2,2,2), cf.Position, lifetime)
     FireSpread.SetOnFire(cf)
 end)
 
